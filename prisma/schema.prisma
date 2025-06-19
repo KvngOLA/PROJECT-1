@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  user
+  super_admin
+}
+
+model users{
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(255) @unique
+  email String @db.VarChar(255) @unique
+  password String @db.VarChar(255)
+  phone String @db.VarChar(11) @unique
+  profile_picture String
+  address String
+  role UserRole @default(user) 
+  posts post[]
+  comments comment[]
+  likes likes[]
+  following follow[] @relation("following")
+  followers follow[] @relation("followers")
+
+  isVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model post{
+  id Int @id @default(autoincrement())
+  title String @db.VarChar(255) @unique
+  description String
+  picture String
+  tags String @db.VarChar(255)
+  userId Int 
+  user users @relation(fields: [userId], references: [id])
+  comments comment[]
+  likes likes[]
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model comment{
+  id Int @id @default(autoincrement())
+  comment String
+  userId Int
+  postId Int
+  user users @relation(fields: [userId], references: [id])
+  posts post @relation(fields: [postId], references: [id])
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model likes{
+  id Int @id @default(autoincrement())
+  userId Int
+  postId Int
+  user users @relation(fields: [userId], references: [id])
+  posts post @relation(fields: [postId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, postId])
+}
+
+model follow{
+  id Int @id @default(autoincrement())
+  followerId Int
+  followeeId Int
+  follower users @relation("following", fields: [followerId],references: [id])
+  followee users @relation("followers", fields: [followeeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([followeeId, followerId])
+}
+
+model otp{
+  id Int @id @default(autoincrement())
+  email String
+  otp String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+}
